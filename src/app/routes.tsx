@@ -7,6 +7,7 @@ import { ImageAnalysis } from "./components/pages/ImageAnalysis";
 import { AccountPage } from "./components/pages/AccountPage";
 import { Report } from "./components/pages/Report";
 import { Notices } from "./components/pages/Notices";
+import { NoticeDetail } from "./components/pages/NoticeDetail";
 import { Login } from "./components/pages/Login";
 import { Signup } from "./components/pages/Signup";
 import { FindId } from "./components/pages/FindId";
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: "text-analysis", Component: TextAnalysis },
       { path: "image-analysis", Component: ImageAnalysis },
       { path: "notices", Component: Notices },
+      { path: "notices/:noticeId", Component: NoticeDetail },
       {
         path: "mypage",
         element: (

@@ -70,7 +70,7 @@ export function Report() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">신고가 접수되었습니다.</h3>
-                <p className="text-gray-500 mt-2">신고된 URL은 이후 URL 분석의 신고 데이터베이스 검사에 반영됩니다.</p>
+                <p className="text-gray-500 mt-2">신고된 URL은 관리자가 완료 처리하면 URL 분석의 신고 데이터베이스 검사에 반영됩니다.</p>
               </div>
               <Button type="button" variant="outline" onClick={() => setIsSubmitted(false)}>
                 다른 URL 신고

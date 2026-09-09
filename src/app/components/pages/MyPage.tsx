@@ -744,6 +744,8 @@ function HistoryDetail({ item }: { item: HistoryItem }) {
             <p className={`${item.type === "URL" ? "break-all" : "line-clamp-3"} text-sm text-gray-700`}>{input}</p>
           </div>
 
+          {item.type === "URL" && <UrlHistorySummaryCards item={item} />}
+
           <div className="flex items-center justify-center py-4">
             <div className="text-center space-y-4">
               <Badge className={`text-lg px-8 py-3 ${getHistoryRiskBadgeClass(item)}`}>
@@ -863,6 +865,75 @@ function HistoryDetail({ item }: { item: HistoryItem }) {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function UrlHistorySummaryCards({ item }: { item: HistoryItem }) {
+  const raw = item.rawResult as RawUrlResult | undefined;
+  const domainInfo = getUrlDomainInfo(raw);
+  const externalSecurityItems = getUrlExternalSecurityInfo(raw);
+
+  if (!raw) return null;
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Globe className="h-4 w-4 text-blue-600" />
+          <p className="text-sm font-semibold text-gray-900">도메인 등록 정보</p>
+        </div>
+        {domainInfo.unavailable ? (
+          <p className="text-sm text-gray-600">RDAP 조회 결과를 가져오지 못했습니다.</p>
+        ) : domainInfo.skipped ? (
+          <p className="text-sm text-gray-600">IP 주소 URL은 도메인 등록 정보 조회 대상이 아닙니다.</p>
+        ) : (
+          <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-1">
+            <div>
+              <p className="text-xs font-medium text-gray-500">도메인</p>
+              <p className="mt-1 break-all font-semibold text-gray-800">{domainInfo.domain || "-"}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">도메인 나이</p>
+              <p className="mt-1 font-semibold text-gray-800">{domainInfo.age || "-"}</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium text-gray-500">등록일</p>
+                <p className="mt-1 text-gray-700">{formatUrlDomainDate(domainInfo.registrationDate)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500">만료일</p>
+                <p className="mt-1 text-gray-700">{formatUrlDomainDate(domainInfo.expirationDate)}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">등록기관</p>
+              <p className="mt-1 text-gray-700">{domainInfo.registrar || "-"}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Shield className="h-4 w-4 text-slate-600" />
+          <p className="text-sm font-semibold text-gray-900">외부 보안 검사</p>
+        </div>
+        <div className="space-y-3">
+          {externalSecurityItems.map((securityItem) => (
+            <div key={securityItem.name} className="rounded-md border border-white bg-white p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-gray-900">{securityItem.name}</p>
+                <Badge className={securityItem.risk ? "bg-red-100 text-red-700 hover:bg-red-100" : "bg-green-100 text-green-700 hover:bg-green-100"}>
+                  {securityItem.badge}
+                </Badge>
+              </div>
+              <p className="text-sm text-gray-600">{securityItem.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1295,6 +1366,57 @@ function getRecommendations(item: HistoryItem) {
   return (item.rawResult as RawImageResult | undefined)?.analysis?.recommendations ?? [];
 }
 
+function getUrlDomainInfo(raw?: RawUrlResult) {
+  const items = raw?.analysis?.domainAge ?? [];
+  const findValue = (prefix: string) =>
+    items.find((item) => item.startsWith(prefix))?.slice(prefix.length).trim();
+
+  return {
+    domain: findValue("도메인 등록 정보 확인: "),
+    registrationDate: findValue("도메인 등록일: "),
+    expirationDate: findValue("도메인 만료일: "),
+    registrar: findValue("등록기관: "),
+    age: findValue("도메인 나이: "),
+    unavailable: items.some((item) => item.includes("RDAP 조회 결과를 가져오지 못했습니다")),
+    skipped: items.some((item) => item.includes("RDAP 도메인 조회 대상이 아닙니다")),
+  };
+}
+
+function getUrlExternalSecurityInfo(raw?: RawUrlResult) {
+  const statuses = raw?.analysis?.blacklistStatus ?? [];
+  const googleItem = statuses.find((status) => status.startsWith("Google Safe Browsing 검사:"));
+  const urlScanItem = statuses.find((status) => status.startsWith("urlscan.io 검사:"));
+
+  const googleRisk = googleItem?.includes("위험 URL로 등록되어 있습니다.") ?? false;
+  const urlScanRisk = urlScanItem?.includes("악성 URL") ?? false;
+
+  return [
+    {
+      name: "Google Safe Browsing",
+      description: googleItem?.replace("Google Safe Browsing 검사: ", "") || "조회 결과가 없습니다.",
+      risk: googleRisk,
+      badge: googleRisk ? "위험 감지" : googleItem ? "미감지" : "조회 없음",
+    },
+    {
+      name: "urlscan.io",
+      description: urlScanItem?.replace("urlscan.io 검사: ", "") || "조회 결과가 없습니다.",
+      risk: urlScanRisk,
+      badge: urlScanRisk ? "악성 기록 감지" : urlScanItem?.includes("기록이 없습니다") ? "기록 없음" : urlScanItem ? "악성 미감지" : "조회 없음",
+    },
+  ];
+}
+
+function formatUrlDomainDate(value?: string) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-2">
@@ -1339,6 +1461,7 @@ type DetailItemLevel = "safe" | "warning" | "danger";
 const normalDetailKeywords = [
   "등록되어 있지 않습니다",
   "신고된 데이터가 없습니다",
+  "완료 처리된 신고 데이터가 없습니다",
   "주의 키워드가 없습니다",
   "정상",
   "유효",
@@ -1396,7 +1519,7 @@ const warningDetailKeywords = [
   "질감 차이",
 ];
 
-const dangerDetailKeywords = ["위험", "실패", "오류", "등록되어 있습니다", "신고된 URL", "인증서 문제", "명확한 합성", "뚜렷한 합성"];
+const dangerDetailKeywords = ["위험", "실패", "오류", "등록되어 있습니다", "신고된 URL", "완료 처리된 신고 URL", "인증서 문제", "명확한 합성", "뚜렷한 합성"];
 
 function getDetailItemLevel(item: string, fallbackResult: HistoryResult): DetailItemLevel {
   if (["AI 보정", "AI 생성 여부", "배제할 수 없", "배제하기 어려", "보정", "리터칭", "편집 가능", "과도한", "가능성"].some((keyword) => item.includes(keyword))) return "warning";

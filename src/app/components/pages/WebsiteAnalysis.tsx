@@ -148,6 +148,7 @@ export function WebsiteAnalysis() {
     [
       "등록되어 있지 않습니다",
       "신고된 데이터가 없습니다",
+      "완료 처리된 신고 데이터가 없습니다",
       "주의 키워드가 없습니다",
       "정상",
       "유효",
@@ -167,6 +168,7 @@ export function WebsiteAnalysis() {
       "오류",
       "등록되어 있습니다",
       "신고된 URL",
+      "완료 처리된 신고 URL",
       "주의 키워드",
       "짧은 URL",
       "IP 주소",
@@ -206,6 +208,29 @@ export function WebsiteAnalysis() {
       unavailable: items.some((item) => item.includes("RDAP 조회 결과를 가져오지 못했습니다")),
       skipped: items.some((item) => item.includes("RDAP 도메인 조회 대상이 아닙니다")),
     };
+  };
+
+  const getExternalSecurityInfo = (analysisResult: AnalysisResult) => {
+    const statuses = analysisResult.analysis.blacklistStatus ?? [];
+    const googleItem = statuses.find((status) => status.startsWith("Google Safe Browsing 검사:"));
+    const urlScanItem = statuses.find((status) => status.startsWith("urlscan.io 검사:"));
+
+    const googleRisk = googleItem?.includes("위험 URL로 등록되어 있습니다.") ?? false;
+    const urlScanRisk = urlScanItem?.includes("악성 URL") ?? false;
+    return [
+      {
+        name: "Google Safe Browsing",
+        description: googleItem?.replace("Google Safe Browsing 검사: ", "") || "조회 결과가 없습니다.",
+        risk: googleRisk,
+        badge: googleRisk ? "위험 감지" : googleItem ? "미감지" : "조회 없음",
+      },
+      {
+        name: "urlscan.io",
+        description: urlScanItem?.replace("urlscan.io 검사: ", "") || "조회 결과가 없습니다.",
+        risk: urlScanRisk,
+        badge: urlScanRisk ? "악성 기록 감지" : urlScanItem?.includes("기록이 없습니다") ? "기록 없음" : urlScanItem ? "악성 미감지" : "조회 없음",
+      },
+    ];
   };
 
   const formatDomainDate = (value?: string) => {
@@ -282,41 +307,66 @@ export function WebsiteAnalysis() {
 
               {(() => {
                 const domainInfo = getDomainInfo(result);
+                const externalSecurityItems = getExternalSecurityInfo(result);
 
                 return (
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-blue-600" />
-                      <p className="text-sm font-semibold text-gray-900">도메인 등록 정보</p>
-                    </div>
-                    {domainInfo.unavailable ? (
-                      <p className="text-sm text-gray-600">RDAP 조회 결과를 가져오지 못했습니다.</p>
-                    ) : domainInfo.skipped ? (
-                      <p className="text-sm text-gray-600">IP 주소 URL은 도메인 등록 정보 조회 대상이 아닙니다.</p>
-                    ) : (
-                      <div className="grid gap-3 text-sm sm:grid-cols-2">
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">도메인</p>
-                          <p className="mt-1 break-all font-semibold text-gray-800">{domainInfo.domain || "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">도메인 나이</p>
-                          <p className="mt-1 font-semibold text-gray-800">{domainInfo.age || "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">등록일</p>
-                          <p className="mt-1 text-gray-700">{formatDomainDate(domainInfo.registrationDate)}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500">만료일</p>
-                          <p className="mt-1 text-gray-700">{formatDomainDate(domainInfo.expirationDate)}</p>
-                        </div>
-                        <div className="sm:col-span-2">
-                          <p className="text-xs font-medium text-gray-500">등록기관</p>
-                          <p className="mt-1 text-gray-700">{domainInfo.registrar || "-"}</p>
-                        </div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                      <div className="mb-3 flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-blue-600" />
+                        <p className="text-sm font-semibold text-gray-900">도메인 등록 정보</p>
                       </div>
-                    )}
+                      {domainInfo.unavailable ? (
+                        <p className="text-sm text-gray-600">RDAP 조회 결과를 가져오지 못했습니다.</p>
+                      ) : domainInfo.skipped ? (
+                        <p className="text-sm text-gray-600">IP 주소 URL은 도메인 등록 정보 조회 대상이 아닙니다.</p>
+                      ) : (
+                        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-1">
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">도메인</p>
+                            <p className="mt-1 break-all font-semibold text-gray-800">{domainInfo.domain || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">도메인 나이</p>
+                            <p className="mt-1 font-semibold text-gray-800">{domainInfo.age || "-"}</p>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <p className="text-xs font-medium text-gray-500">등록일</p>
+                              <p className="mt-1 text-gray-700">{formatDomainDate(domainInfo.registrationDate)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-gray-500">만료일</p>
+                              <p className="mt-1 text-gray-700">{formatDomainDate(domainInfo.expirationDate)}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">등록기관</p>
+                            <p className="mt-1 text-gray-700">{domainInfo.registrar || "-"}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <div className="mb-3 flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-slate-600" />
+                        <p className="text-sm font-semibold text-gray-900">외부 보안 검사</p>
+                      </div>
+                      <div className="space-y-3">
+                        {externalSecurityItems.map((item) => (
+                          <div key={item.name} className="rounded-md border border-white bg-white p-3">
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                              <Badge className={item.risk ? "bg-red-100 text-red-700 hover:bg-red-100" : "bg-green-100 text-green-700 hover:bg-green-100"}>
+                                {item.badge}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">{item.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
