@@ -217,6 +217,7 @@ export function WebsiteAnalysis() {
 
     const googleRisk = googleItem?.includes("위험 URL로 등록되어 있습니다.") ?? false;
     const urlScanRisk = urlScanItem?.includes("악성 URL") ?? false;
+    const urlScanFailed = isUrlScanLookupFailed(urlScanItem);
     return [
       {
         name: "Google Safe Browsing",
@@ -228,10 +229,19 @@ export function WebsiteAnalysis() {
         name: "urlscan.io",
         description: urlScanItem?.replace("urlscan.io 검사: ", "") || "조회 결과가 없습니다.",
         risk: urlScanRisk,
-        badge: urlScanRisk ? "악성 기록 감지" : urlScanItem?.includes("기록이 없습니다") ? "기록 없음" : urlScanItem ? "악성 미감지" : "조회 없음",
+        badge: urlScanRisk ? "악성 기록 감지" : urlScanFailed ? "조회 실패" : urlScanItem?.includes("기록이 없습니다") ? "기록 없음" : urlScanItem ? "악성 미감지" : "조회 없음",
       },
     ];
   };
+
+  const isUrlScanLookupFailed = (value?: string) =>
+    !!value && (
+      value.includes("실패")
+      || value.includes("오류")
+      || value.includes("올바르지 않습니다")
+      || value.includes("API 키")
+      || value.includes("비활성화")
+    );
 
   const formatDomainDate = (value?: string) => {
     if (!value) return "-";
