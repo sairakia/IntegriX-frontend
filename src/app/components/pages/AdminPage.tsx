@@ -27,7 +27,7 @@ import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 
-type AdminView = "dashboard" | "reports" | "urlPolicies";
+type AdminView = "dashboard" | "reports" | "urlPolicies" | "users";
 
 interface ReportFeedback {
   feedbackId: number;
@@ -66,6 +66,15 @@ interface UrlPolicy {
   updatedAt: string;
 }
 
+interface AdminUser {
+  userId: string;
+  email: string;
+  name: string;
+  role: "USER" | "ADMIN";
+  status: "ACTIVE" | "INACTIVE";
+  profileImageUrl?: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -73,6 +82,14 @@ interface ApiResponse<T> {
 }
 
 const REPORT_STATUSES = ["접수", "처리중", "완료", "반려"];
+const USER_ROLES = [
+  { value: "USER", label: "일반 사용자" },
+  { value: "ADMIN", label: "관리자" },
+] as const;
+const USER_STATUSES = [
+  { value: "ACTIVE", label: "활성" },
+  { value: "INACTIVE", label: "비활성" },
+] as const;
 
 const EMPTY_URL_POLICY_FORM = {
   pattern: "",
@@ -123,11 +140,18 @@ export function AdminPage() {
           label="URL 목록"
           onClick={() => setActiveView("urlPolicies")}
         />
+        <AdminViewButton
+          active={activeView === "users"}
+          icon={<Users className="h-4 w-4" />}
+          label="사용자 관리"
+          onClick={() => setActiveView("users")}
+        />
       </div>
 
       {activeView === "dashboard" && <AdminDashboard />}
       {activeView === "reports" && <AdminReportManager />}
       {activeView === "urlPolicies" && <AdminUrlPolicyManager />}
+      {activeView === "users" && <AdminUserManager currentUserId={user?.userId} />}
     </div>
   );
 }
@@ -353,6 +377,183 @@ function AdminReportManager() {
                         />
                         <Button className="w-full" onClick={() => saveReport(report.feedbackId)} disabled={savingId === report.feedbackId}>
                           {savingId === report.feedbackId ? "저장 중" : "저장"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AdminUserManager({ currentUserId }: { currentUserId?: string }) {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [drafts, setDrafts] = useState<Record<string, { role: "USER" | "ADMIN"; status: "ACTIVE" | "INACTIVE" }>>({});
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  const userStats = useMemo(
+    () => ({
+      total: users.length,
+      active: users.filter((user) => user.status === "ACTIVE").length,
+      inactive: users.filter((user) => user.status === "INACTIVE").length,
+      admins: users.filter((user) => user.role === "ADMIN").length,
+    }),
+    [users],
+  );
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await axios.get<ApiResponse<AdminUser[]>>(`${API_BASE_URL}/api/admin/users`);
+      if (!response.data.success || !response.data.data) {
+        setError(response.data.message || "사용자 목록을 불러오지 못했습니다.");
+        return;
+      }
+
+      setUsers(response.data.data);
+      setDrafts(
+        Object.fromEntries(
+          response.data.data.map((user) => [
+            user.userId,
+            { role: user.role, status: user.status },
+          ]),
+        ),
+      );
+    } catch {
+      setError("사용자 목록을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateDraft = (userId: string, value: Partial<{ role: "USER" | "ADMIN"; status: "ACTIVE" | "INACTIVE" }>) => {
+    setDrafts((current) => ({
+      ...current,
+      [userId]: {
+        role: current[userId]?.role || "USER",
+        status: current[userId]?.status || "ACTIVE",
+        ...value,
+      },
+    }));
+  };
+
+  const saveUser = async (userId: string) => {
+    const draft = drafts[userId];
+    if (!draft) return;
+
+    setSavingId(userId);
+    setError("");
+
+    try {
+      const response = await axios.patch<ApiResponse<AdminUser>>(`${API_BASE_URL}/api/admin/users/${userId}`, draft);
+      if (!response.data.success || !response.data.data) {
+        setError(response.data.message || "사용자 정보를 저장하지 못했습니다.");
+        return;
+      }
+
+      setUsers((current) =>
+        current.map((user) => (user.userId === userId ? response.data.data! : user)),
+      );
+      setDrafts((current) => ({
+        ...current,
+        [userId]: {
+          role: response.data.data!.role,
+          status: response.data.data!.status,
+        },
+      }));
+    } catch {
+      setError("사용자 정보를 저장하지 못했습니다.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">사용자 관리</h2>
+        <p className="mt-1 text-sm text-gray-500">회원의 활성 상태와 관리자 권한을 관리합니다.</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard title="전체 회원" value={userStats.total} icon={<Users className="h-5 w-5 text-slate-600" />} />
+        <StatCard title="활성" value={userStats.active} icon={<UserCheck className="h-5 w-5 text-emerald-600" />} />
+        <StatCard title="비활성" value={userStats.inactive} icon={<AlertTriangle className="h-5 w-5 text-amber-600" />} />
+        <StatCard title="관리자" value={userStats.admins} icon={<ShieldAlert className="h-5 w-5 text-blue-600" />} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>회원 목록</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+          {loading ? (
+            <p className="py-12 text-center text-gray-500">사용자 목록을 불러오는 중입니다.</p>
+          ) : users.length === 0 ? (
+            <p className="py-12 text-center text-gray-500">등록된 사용자가 없습니다.</p>
+          ) : (
+            <div className="space-y-3">
+              {users.map((targetUser) => {
+                const draft = drafts[targetUser.userId] || { role: targetUser.role, status: targetUser.status };
+                const isCurrentUser = targetUser.userId === currentUserId;
+
+                return (
+                  <div key={targetUser.userId} className="rounded-lg border border-gray-200 bg-white p-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-gray-900">{targetUser.userId}</span>
+                          <Badge className={getUserStatusBadgeClass(targetUser.status)}>{targetUser.status === "ACTIVE" ? "활성" : "비활성"}</Badge>
+                          <Badge className={getUserRoleBadgeClass(targetUser.role)}>{targetUser.role === "ADMIN" ? "관리자" : "사용자"}</Badge>
+                          {isCurrentUser && <span className="text-xs text-gray-500">현재 계정</span>}
+                        </div>
+                        <p className="text-sm font-medium text-gray-800">{targetUser.name}</p>
+                        <p className="break-all text-sm text-gray-600">{targetUser.email}</p>
+                      </div>
+
+                      <div className="grid w-full gap-3 sm:grid-cols-[1fr_1fr_auto] lg:w-[520px]">
+                        <Select value={draft.status} onValueChange={(value: "ACTIVE" | "INACTIVE") => updateDraft(targetUser.userId, { status: value })} disabled={isCurrentUser}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="상태" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {USER_STATUSES.map((status) => (
+                              <SelectItem key={status.value} value={status.value}>
+                                {status.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Select value={draft.role} onValueChange={(value: "USER" | "ADMIN") => updateDraft(targetUser.userId, { role: value })} disabled={isCurrentUser}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="권한" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {USER_ROLES.map((role) => (
+                              <SelectItem key={role.value} value={role.value}>
+                                {role.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Button type="button" onClick={() => saveUser(targetUser.userId)} disabled={savingId === targetUser.userId || isCurrentUser}>
+                          {savingId === targetUser.userId ? "저장 중" : "저장"}
                         </Button>
                       </div>
                     </div>
@@ -623,6 +824,16 @@ function getReportStatusBadgeClass(status: string) {
   if (status === "반려") return "bg-red-100 text-red-700 hover:bg-red-100";
   if (status === "처리중") return "bg-blue-100 text-blue-700 hover:bg-blue-100";
   return "bg-amber-100 text-amber-700 hover:bg-amber-100";
+}
+
+function getUserStatusBadgeClass(status: string) {
+  if (status === "ACTIVE") return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
+  return "bg-gray-100 text-gray-600 hover:bg-gray-100";
+}
+
+function getUserRoleBadgeClass(role: string) {
+  if (role === "ADMIN") return "bg-blue-100 text-blue-700 hover:bg-blue-100";
+  return "bg-slate-100 text-slate-700 hover:bg-slate-100";
 }
 
 function formatDateTime(value?: string | null) {
