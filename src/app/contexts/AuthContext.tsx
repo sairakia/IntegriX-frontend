@@ -14,7 +14,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (userId: string, password: string) => Promise<User | null>;
+  login: (userId: string, password: string) => Promise<{ user: User | null; message?: string }>;
   signup: (
     email: string,
     password: string,
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (userId: string, password: string): Promise<User | null> => {
+  const login = async (userId: string, password: string): Promise<{ user: User | null; message?: string }> => {
     try {
       const response = await axios.post<ApiResponse<TokenResponse>>(
         `${API_BASE_URL}/user/login`,
@@ -156,16 +156,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = response.data;
 
       if (!data.success || !data.data) {
-        return null;
+        return { user: null, message: data.message || "아이디 또는 비밀번호가 올바르지 않습니다." };
       }
 
       authVersionRef.current += 1;
       setUser(data.data.user);
       sessionStorage.setItem("user", JSON.stringify(data.data.user));
 
-      return data.data.user;
-    } catch {
-      return null;
+      return { user: data.data.user };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (!error.response) {
+          return { user: null, message: "서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요." };
+        }
+        return { user: null, message: getApiErrorMessage(error.response.data, "아이디 또는 비밀번호가 올바르지 않습니다.") };
+      }
+      return { user: null, message: "로그인 처리 중 오류가 발생했습니다." };
     }
   };
 

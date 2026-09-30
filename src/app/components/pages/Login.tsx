@@ -21,12 +21,12 @@ export function Login() {
     setError("");
     setIsLoading(true);
 
-    const loggedInUser = await login(userId, password);
+    const result = await login(userId, password);
 
-    if (loggedInUser) {
+    if (result.user) {
       navigate("/");
     } else {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+      setError(result.message || "아이디 또는 비밀번호가 올바르지 않습니다.");
     }
 
     setIsLoading(false);
