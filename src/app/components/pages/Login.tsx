@@ -21,9 +21,9 @@ export function Login() {
     setError("");
     setIsLoading(true);
 
-    const success = await login(userId, password);
+    const loggedInUser = await login(userId, password);
 
-    if (success) {
+    if (loggedInUser) {
       navigate("/");
     } else {
       setError("아이디 또는 비밀번호가 올바르지 않습니다.");

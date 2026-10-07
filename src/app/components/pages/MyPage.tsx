@@ -110,6 +110,20 @@ interface ProfileUser {
   profileImage?: string;
 }
 
+interface ReportFeedback {
+  feedbackId: number;
+  userId?: string;
+  resultId?: string;
+  feedbackType: string;
+  content: string;
+  reason?: string;
+  status: string;
+  adminReply?: string;
+  createdAt: string;
+  processedAt?: string;
+  updatedAt?: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -162,7 +176,8 @@ export function MyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "history" ? "history" : "profile");
+  const initialTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(initialTab === "history" || initialTab === "reports" ? initialTab : "profile");
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileImageError, setProfileImageError] = useState("");
 
@@ -172,6 +187,10 @@ export function MyPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [resultFilter, setResultFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
+
+  const [reports, setReports] = useState<ReportFeedback[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState("");
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -206,6 +225,30 @@ export function MyPage() {
     };
 
     fetchHistory();
+  }, [activeTab, user]);
+
+  useEffect(() => {
+    if (activeTab !== "reports" || !user) return;
+
+    const fetchReports = async () => {
+      setReportsLoading(true);
+      setReportsError("");
+
+      try {
+        const response = await axios.get<ApiResponse<ReportFeedback[]>>(`${API_BASE_URL}/api/report/my`);
+        if (!response.data.success || !response.data.data) {
+          setReportsError(response.data.message || "신고 접수 내역을 불러오지 못했습니다.");
+          return;
+        }
+        setReports(response.data.data);
+      } catch {
+        setReportsError("신고 접수 내역을 불러오지 못했습니다.");
+      } finally {
+        setReportsLoading(false);
+      }
+    };
+
+    fetchReports();
   }, [activeTab, user]);
 
   const filteredHistory = useMemo(
@@ -332,7 +375,7 @@ export function MyPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 grid w-full grid-cols-2">
+        <TabsList className="mb-6 grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             내 정보
@@ -340,6 +383,10 @@ export function MyPage() {
           <TabsTrigger value="history" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             분석 기록
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            신고 내역
           </TabsTrigger>
         </TabsList>
 
@@ -372,6 +419,10 @@ export function MyPage() {
             error={historyError}
             onSelect={setSelectedItem}
           />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <ReportFeedbackTable reports={reports} loading={reportsLoading} error={reportsError} />
         </TabsContent>
       </Tabs>
 
@@ -479,6 +530,73 @@ function ProfileSection({
             회원 탈퇴
           </Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReportFeedbackTable({
+  reports,
+  loading,
+  error,
+}: {
+  reports: ReportFeedback[];
+  loading: boolean;
+  error: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>신고 접수 내역</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {error && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+        {loading ? (
+          <p className="py-12 text-center text-gray-500">신고 접수 내역을 불러오는 중입니다.</p>
+        ) : reports.length === 0 ? (
+          <p className="py-12 text-center text-gray-500">접수한 신고 내역이 없습니다.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">접수번호</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">신고 URL</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">사유</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">상태</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">접수일</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">처리일</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">관리자 답변</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.feedbackId} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-4 text-sm text-gray-700">#{report.feedbackId}</td>
+                    <td className="max-w-xs px-4 py-4">
+                      <p className="truncate text-sm text-gray-700" title={report.content}>
+                        {report.content}
+                      </p>
+                    </td>
+                    <td className="max-w-xs px-4 py-4">
+                      <p className="truncate text-sm text-gray-600" title={report.reason || ""}>
+                        {report.reason || "-"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge className={getReportStatusBadgeClass(report.status)}>{report.status}</Badge>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-500">{formatDateTime(report.createdAt)}</td>
+                    <td className="px-4 py-4 text-sm text-gray-500">{formatDateTime(report.processedAt)}</td>
+                    <td className="max-w-sm px-4 py-4">
+                      <p className="whitespace-pre-wrap text-sm text-gray-600">{report.adminReply || "-"}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -1328,6 +1446,26 @@ function EmptyDetail() {
       표시할 내용이 없습니다.
     </p>
   );
+}
+
+function getReportStatusBadgeClass(status: string) {
+  if (status === "완료") return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100";
+  if (status === "반려") return "bg-red-100 text-red-700 hover:bg-red-100";
+  if (status === "처리중") return "bg-blue-100 text-blue-700 hover:bg-blue-100";
+  return "bg-amber-100 text-amber-700 hover:bg-amber-100";
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function PasswordDialog({

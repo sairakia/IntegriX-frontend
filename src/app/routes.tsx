@@ -4,8 +4,9 @@ import { Dashboard } from "./components/pages/Dashboard";
 import { WebsiteAnalysis } from "./components/pages/WebsiteAnalysis";
 import { TextAnalysis } from "./components/pages/TextAnalysis";
 import { ImageAnalysis } from "./components/pages/ImageAnalysis";
-import { MyPage } from "./components/pages/MyPage";
+import { AccountPage } from "./components/pages/AccountPage";
 import { Report } from "./components/pages/Report";
+import { Notices } from "./components/pages/Notices";
 import { Login } from "./components/pages/Login";
 import { Signup } from "./components/pages/Signup";
 import { FindId } from "./components/pages/FindId";
@@ -37,15 +38,23 @@ export const router = createBrowserRouter([
       { path: "website-analysis", Component: WebsiteAnalysis },
       { path: "text-analysis", Component: TextAnalysis },
       { path: "image-analysis", Component: ImageAnalysis },
+      { path: "notices", Component: Notices },
       {
         path: "mypage",
         element: (
           <ProtectedRoute>
-            <MyPage />
+            <AccountPage />
           </ProtectedRoute>
         ),
       },
-      { path: "report", Component: Report },
+      {
+        path: "report",
+        element: (
+          <ProtectedRoute>
+            <Report />
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
 ]);
