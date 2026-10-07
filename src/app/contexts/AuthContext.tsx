@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import axios from "axios";
 import { clearStoredTokens } from "../api/authTokens";
 import { API_BASE_URL, getApiErrorMessage } from "../api/config";
@@ -8,12 +8,13 @@ interface User {
   userId: string;
   email: string;
   name: string;
+  role?: string;
   profileImage?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (userId: string, password: string) => Promise<boolean>;
+  login: (userId: string, password: string) => Promise<User | null>;
   signup: (
     email: string,
     password: string,
@@ -44,9 +45,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const authVersionRef = useRef(0);
 
   useEffect(() => {
     const syncAuthState = async () => {
+      const syncVersion = authVersionRef.current;
       localStorage.removeItem("user");
       clearStoredTokens();
 
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await fetchCurrentUser();
 
         if (currentUser) {
+          if (authVersionRef.current !== syncVersion) return;
           setUser(currentUser);
           sessionStorage.setItem("user", JSON.stringify(currentUser));
           return;
@@ -61,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const refreshedUser = await refreshTokenAndFetchUser();
         if (refreshedUser) {
+          if (authVersionRef.current !== syncVersion) return;
           setUser(refreshedUser);
           sessionStorage.setItem("user", JSON.stringify(refreshedUser));
           return;
@@ -69,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearStoredTokens();
       }
 
+      if (authVersionRef.current !== syncVersion) return;
       setUser(null);
       sessionStorage.removeItem("user");
     };
@@ -121,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, message: data.message || "회원가입에 실패했습니다." };
       }
 
+      authVersionRef.current += 1;
       setUser(data.data.user);
       sessionStorage.setItem("user", JSON.stringify(data.data.user));
 
@@ -136,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (userId: string, password: string): Promise<boolean> => {
+  const login = async (userId: string, password: string): Promise<User | null> => {
     try {
       const response = await axios.post<ApiResponse<TokenResponse>>(
         `${API_BASE_URL}/user/login`,
@@ -149,19 +156,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = response.data;
 
       if (!data.success || !data.data) {
-        return false;
+        return null;
       }
 
+      authVersionRef.current += 1;
       setUser(data.data.user);
       sessionStorage.setItem("user", JSON.stringify(data.data.user));
 
-      return true;
+      return data.data.user;
     } catch {
-      return false;
+      return null;
     }
   };
 
   const logout = () => {
+    authVersionRef.current += 1;
     axios.post(`${API_BASE_URL}/user/logout`, {}).catch(() => undefined);
 
     setUser(null);

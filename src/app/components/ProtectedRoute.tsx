@@ -1,14 +1,14 @@
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { ReactNode, useState, useEffect } from "react";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogAction,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "./ui/alert-dialog";
 
 interface ProtectedRouteProps {
@@ -36,7 +36,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>로그인이 필요한 서비스입니다</AlertDialogTitle>
+            <AlertDialogTitle>로그인이 필요합니다</AlertDialogTitle>
             <AlertDialogDescription>
               이 페이지에 접근하려면 로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?
             </AlertDialogDescription>

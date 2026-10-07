@@ -5,6 +5,7 @@ import {
   Globe,
   Image as ImageIcon,
   LayoutDashboard,
+  Megaphone,
   User,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -124,6 +125,17 @@ export function Layout() {
             >
               <ImageIcon className="h-5 w-5" />
               이미지 신뢰도 분석
+            </Link>
+            <Link
+              to="/notices"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isActive("/notices")
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <Megaphone className="h-5 w-5" />
+              {"\uacf5\uc9c0\uc0ac\ud56d"}
             </Link>
             <Link
               to="/report"

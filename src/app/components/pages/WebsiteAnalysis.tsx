@@ -162,6 +162,7 @@ export function WebsiteAnalysis() {
 
     return [
       "위험",
+      "악성",
       "실패",
       "오류",
       "등록되어 있습니다",
@@ -189,6 +190,33 @@ export function WebsiteAnalysis() {
 
   const getScoreBasisItems = (analysisResult: AnalysisResult) => {
     return analysisResult.scoreFactors ?? [];
+  };
+
+  const getDomainInfo = (analysisResult: AnalysisResult) => {
+    const items = analysisResult.analysis.domainAge ?? [];
+    const findValue = (prefix: string) =>
+      items.find((item) => item.startsWith(prefix))?.slice(prefix.length).trim();
+
+    return {
+      domain: findValue("도메인 등록 정보 확인: "),
+      registrationDate: findValue("도메인 등록일: "),
+      expirationDate: findValue("도메인 만료일: "),
+      registrar: findValue("등록기관: "),
+      age: findValue("도메인 나이: "),
+      unavailable: items.some((item) => item.includes("RDAP 조회 결과를 가져오지 못했습니다")),
+      skipped: items.some((item) => item.includes("RDAP 도메인 조회 대상이 아닙니다")),
+    };
+  };
+
+  const formatDomainDate = (value?: string) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
   };
 
   const getCheckStats = (analysisResult: AnalysisResult) => {
@@ -251,6 +279,47 @@ export function WebsiteAnalysis() {
                 <p className="text-xs text-gray-500 mb-2 font-medium">분석 URL</p>
                 <p className="text-sm text-gray-700 break-all">{result.url}</p>
               </div>
+
+              {(() => {
+                const domainInfo = getDomainInfo(result);
+
+                return (
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-blue-600" />
+                      <p className="text-sm font-semibold text-gray-900">도메인 등록 정보</p>
+                    </div>
+                    {domainInfo.unavailable ? (
+                      <p className="text-sm text-gray-600">RDAP 조회 결과를 가져오지 못했습니다.</p>
+                    ) : domainInfo.skipped ? (
+                      <p className="text-sm text-gray-600">IP 주소 URL은 도메인 등록 정보 조회 대상이 아닙니다.</p>
+                    ) : (
+                      <div className="grid gap-3 text-sm sm:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">도메인</p>
+                          <p className="mt-1 break-all font-semibold text-gray-800">{domainInfo.domain || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">도메인 나이</p>
+                          <p className="mt-1 font-semibold text-gray-800">{domainInfo.age || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">등록일</p>
+                          <p className="mt-1 text-gray-700">{formatDomainDate(domainInfo.registrationDate)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-500">만료일</p>
+                          <p className="mt-1 text-gray-700">{formatDomainDate(domainInfo.expirationDate)}</p>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <p className="text-xs font-medium text-gray-500">등록기관</p>
+                          <p className="mt-1 text-gray-700">{domainInfo.registrar || "-"}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-center py-4">
                 <div className="text-center space-y-4">
