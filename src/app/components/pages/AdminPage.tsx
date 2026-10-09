@@ -8,9 +8,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Textarea } from "../ui/textarea";
-import { AdminNoticeManager } from "./AdminNoticeManager";
 
 interface ReportFeedback {
   feedbackId: number;
@@ -138,17 +136,6 @@ export function AdminPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="reports" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-2 rounded-lg bg-gray-100 p-1 sm:w-[360px]">
-          <TabsTrigger value="reports" className="rounded-md">
-            신고 관리
-          </TabsTrigger>
-          <TabsTrigger value="notices" className="rounded-md">
-            공지사항 관리
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="reports" className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard title="전체" value={stats.total} icon={<AlertTriangle className="h-5 w-5 text-gray-600" />} />
         <StatCard title="접수" value={stats.pending} icon={<Clock className="h-5 w-5 text-amber-600" />} />
@@ -219,13 +206,6 @@ export function AdminPage() {
           )}
         </CardContent>
       </Card>
-
-        </TabsContent>
-
-        <TabsContent value="notices">
-          <AdminNoticeManager />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
