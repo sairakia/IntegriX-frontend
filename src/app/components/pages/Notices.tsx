@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ChevronDown, Megaphone, Pin } from "lucide-react";
+import { ChevronDown, Megaphone, Pin, Plus, X } from "lucide-react";
 import { API_BASE_URL } from "../../api/config";
+import { useAuth } from "../../contexts/AuthContext";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Checkbox } from "../ui/checkbox";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 
 interface Notice {
   noticeId: number;
@@ -23,40 +28,150 @@ interface ApiResponse<T> {
   data?: T;
 }
 
+const EMPTY_FORM = {
+  title: "",
+  content: "",
+  pinned: false,
+};
+
 export function Notices() {
+  const { user } = useAuth();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [expandedNoticeId, setExpandedNoticeId] = useState<number | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [showWriteForm, setShowWriteForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const isAdmin = user?.role === "ADMIN";
 
   useEffect(() => {
-    const fetchNotices = async () => {
-      setLoading(true);
-      setError("");
-
-      try {
-        const response = await axios.get<ApiResponse<Notice[]>>(`${API_BASE_URL}/api/notices`);
-        if (!response.data.success || !response.data.data) {
-          setError(response.data.message || "공지사항을 불러오지 못했습니다.");
-          return;
-        }
-        setNotices(response.data.data);
-      } catch {
-        setError("공지사항을 불러오지 못했습니다.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchNotices();
-  }, []);
+  }, [isAdmin]);
+
+  const fetchNotices = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const endpoint = isAdmin ? "/api/notices/admin/list" : "/api/notices";
+      const response = await axios.get<ApiResponse<Notice[]>>(`${API_BASE_URL}${endpoint}`);
+      if (!response.data.success || !response.data.data) {
+        setError(response.data.message || "공지사항을 불러오지 못했습니다.");
+        return;
+      }
+      setNotices(response.data.data);
+    } catch {
+      setError("공지사항을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setShowWriteForm(false);
+  };
+
+  const submitNotice = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.title.trim() || !form.content.trim()) return;
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const response = await axios.post<ApiResponse<Notice>>(`${API_BASE_URL}/api/notices/admin`, {
+        title: form.title.trim(),
+        content: form.content.trim(),
+        pinned: form.pinned,
+        visible: true,
+      });
+
+      if (!response.data.success) {
+        setError(response.data.message || "공지사항을 저장하지 못했습니다.");
+        return;
+      }
+
+      resetForm();
+      await fetchNotices();
+    } catch {
+      setError("공지사항을 저장하지 못했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">공지사항</h1>
-        <p className="mt-1 text-gray-500">IntegriX 서비스 안내와 업데이트를 확인하세요.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">공지사항</h1>
+          <p className="mt-1 text-gray-500">IntegriX 서비스 안내와 업데이트를 확인하세요.</p>
+        </div>
+        {isAdmin && (
+          <Button type="button" onClick={() => setShowWriteForm((current) => !current)}>
+            {showWriteForm ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+            {showWriteForm ? "작성 취소" : "글쓰기"}
+          </Button>
+        )}
       </div>
+
+      {isAdmin && showWriteForm && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-blue-600" />
+              <CardTitle>공지사항 작성</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={submitNotice} className="space-y-4" noValidate>
+              <div className="grid gap-4 lg:grid-cols-[1fr_120px]">
+                <div className="space-y-2">
+                  <Label htmlFor="notice-title">제목</Label>
+                  <Input
+                    id="notice-title"
+                    value={form.title}
+                    onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                    maxLength={200}
+                    required
+                  />
+                </div>
+                <div className="flex items-end">
+                  <label className="flex h-10 items-center gap-2 text-sm text-gray-700">
+                    <Checkbox
+                      checked={form.pinned}
+                      onCheckedChange={(checked) => setForm((current) => ({ ...current, pinned: checked === true }))}
+                    />
+                    상단 고정
+                  </label>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notice-content">내용</Label>
+                <Textarea
+                  id="notice-content"
+                  value={form.content}
+                  onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
+                  rows={6}
+                  className="resize-none"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  취소
+                </Button>
+                <Button type="submit" disabled={saving || !form.title.trim() || !form.content.trim()}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {saving ? "등록 중..." : "등록"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
