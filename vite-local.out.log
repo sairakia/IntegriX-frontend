@@ -1,0 +1,34 @@
+
+> @figma/my-make-file@0.0.1 dev
+> vite --host 127.0.0.1
+
+
+  [32m[1mVITE[22m v6.3.5[39m  [2mready in [0m[1m3808[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2mPM 5:04:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Notices.tsx, /src/styles/index.css[22m
+[2mPM 5:04:50[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css[22m
+[2mPM 5:33:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 9:14:11[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\WebsiteAnalysis.tsx, /src/styles/index.css[22m
+[2mAM 9:27:05[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 9:31:01[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx, /src/styles/index.css[22m
+[2mAM 9:31:26[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx, /src/styles/index.css[22m
+[2mAM 9:32:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx, /src/styles/index.css[22m
+[2mAM 9:32:25[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx, /src/styles/index.css[22m
+[2mAM 10:08:06[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 10:25:08[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 10:28:37[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 10:53:49[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 10:54:28[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mAM 10:59:46[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Report.tsx, /src/styles/index.css[22m
+[2mAM 10:59:55[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\WebsiteAnalysis.tsx, /src/styles/index.css[22m
+[2mAM 11:00:07[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx, /src/styles/index.css[22m
+[2mAM 11:24:09[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\WebsiteAnalysis.tsx, /src/styles/index.css[22m
+[2mAM 11:24:22[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx, /src/styles/index.css[22m
+[2mPM 12:06:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mPM 12:12:45[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mPM 12:12:59[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /src/styles/index.css[22m
+[2mPM 12:25:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/contexts/AuthContext.tsx, /src/styles/index.css[22m
+[2mPM 12:25:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [33mhmr invalidate [39m[2m/src/app/contexts/AuthContext.tsx[22m Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2mPM 12:25:53[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/App.tsx, /src/styles/index.css, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\Layout.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\ProtectedRoute.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Login.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AccountPage.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Dashboard.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Notices.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Signup.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\AdminPage.tsx, /@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\MyPage.tsx[22m
+[2mPM 12:26:03[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/@fs/C:\Users\8316-08\Downloads\IntegriX\src\app\components\pages\Login.tsx, /src/styles/index.css[22m
